@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-api
+  template:
+    metadata:
+      labels:
+        app: fraud-api
+    spec:
+      containers:
+      - name: fraud-api
+        image: fraud_detection_project-fraud_api
+        imagePullPolicy: Never 
+        ports:
+        - containerPort: 8000
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-api
+spec:
+  selector:
+    app: fraud-api
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  type: NodePort
