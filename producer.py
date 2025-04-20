@@ -1,9 +1,8 @@
 import json
 import time
 import random
-import uuid  # Import for generating unique transaction IDs
+import uuid  # For generating unique transaction IDs
 from kafka import KafkaProducer
-import numpy as np  # Import numpy for log transformation
 
 # Initialize Kafka Producer
 producer = KafkaProducer(
@@ -14,14 +13,13 @@ producer = KafkaProducer(
 
 # Function to generate transaction data
 def generate_transaction():
-    amount = random.uniform(1, 1000)  # Generate random amount (avoid log(0))
-    log_amount = np.log(amount)  # Apply log transformation
+    amount = round(random.uniform(1, 1000), 2)  # Keep raw amount
     return {
-        "Transaction_ID": str(uuid.uuid4()),  # Generate unique transaction ID
-        "Timestamp": time.time(),  # Current Unix timestamp
-        "Log_Amount": round(log_amount, 4),  
+        "Transaction_ID": str(uuid.uuid4()),       # Unique transaction ID
+        "Timestamp": time.time(),                  # Current Unix timestamp
+        "Amount": amount,                          # Raw amount, used for model
         "Hour": random.randint(0, 23),
-        "Day_Night": random.choice([0, 1])
+        "Day_Night": random.choice([0, 1])         # Could represent context feature
     }
 
 # Send transactions continuously
