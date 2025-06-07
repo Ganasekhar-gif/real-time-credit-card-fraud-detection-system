@@ -4,6 +4,17 @@ This project is a real-time fraud detection pipeline built with FastAPI, Kafka, 
 
 ---
 
+## 📝 Project Overview
+
+This system:
+- Streams synthetic transactions using Kafka.
+- Predicts fraudulent activity in real-time with an unsupervised ML model.
+- Logs predictions into MongoDB for visualization or auditing.
+- Is fully containerized via Docker and deployed on Kubernetes (Minikube).
+
+---
+
+
 ## 📦 Tech Stack
 
 | Technology | Purpose |
