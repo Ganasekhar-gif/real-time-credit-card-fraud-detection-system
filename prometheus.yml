@@ -2,8 +2,12 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: 'fastapi'
+  - job_name: "fraud_api"
     static_configs:
-      - targets: ['fraud_api:8000']
+      - targets: ["fraud_api:8000"]
         labels:
           app: fraud-api
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]

@@ -88,32 +88,25 @@ fraud_detection_project/
 
 ### 2️⃣ Build & Run with Docker (Local)
 
-```bash
-docker build -t fraud-api .
-docker run -p 8000:8000 fraud-api
+# 🚀 Real-Time Fraud Detection System (Docker Compose Deployment)
 
-#--> Running with kubernetes(minikube)
-# Start minikube
-minikube start
+# 1. Start all services (Zookeeper, Kafka, MongoDB, FastAPI)
+docker-compose up -d
 
-# Enable Kubernetes dashboard (optional)
-minikube dashboard
+# 2. Check running containers
+docker ps
 
-# Deploy services
-kubectl apply -f k8s/
+# 3. API Endpoints (FastAPI is on port 8000)
 
-# --> Access FastAPI service
-minikube service fraud-api --url
+# Produce Endpoint (simulate transaction stream)
+curl -X POST http://localhost:8000/produce
 
-# API endpoints/ POST/produce
-curl -X POST http://<MINIKUBE-URL>/produce
-
-# prediction endpoint/predict
-curl -X POST http://<MINIKUBE-URL>/predict \
+# Prediction Endpoint
+curl -X POST http://localhost:8000/predict \
 -H "Content-Type: application/json" \
 -d '{"Log_Amount": 6.5, "Hour": 12, "Day_Night": 1}'
 
-# MongoDB storage schema
+# 4. MongoDB Storage Schema (example document)
 {
   "transaction_id": "uuid",
   "timestamp": 1712134567.123,
@@ -124,24 +117,31 @@ curl -X POST http://<MINIKUBE-URL>/predict \
   "predicted_label": "fraud"
 }
 
-# monitoring and logging
-kubectl logs <pod-name>
-kubectl get pods
+# 5. Logs & Monitoring
 
-# To check MongoDB entries (inside container):
-kubectl exec -it <mongodb-pod> -- bash
-mongosh
+# View logs of all services
+docker-compose logs -f
+
+# View logs for FastAPI specifically
+docker logs fraud_api
+
+# View logs for Kafka
+docker logs kafka
+
+# 6. Access MongoDB (inside the container)
+docker exec -it mongodb mongosh
 use fraud_detection
 db.transactions.find().pretty()
 
-# Future improvements
- --> Integrate Redis as an optional message broker
+# 7. Stop all services
+docker-compose down
 
- --> Add Prometheus & Grafana for monitoring
+# 8. Future Improvements
+# - Integrate Redis as an optional message broker
+# - Add Prometheus & Grafana for monitoring
+# - Add healthchecks in docker-compose.yml
+# - Stream results to a dashboard (Dash/Streamlit)
+# - Deploy to Kubernetes later with Helm
 
- --> Deploy using Helm charts
-
- --> Stream results to dashboard (e.g., using Dash or Streamlit)
-
-# AUTHOR
-email: ganasekharkalla@gmail.com
+# 📧 Author
+# Email: ganasekharkalla@gmail.com
