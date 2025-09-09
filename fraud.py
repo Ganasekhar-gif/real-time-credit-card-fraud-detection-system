@@ -6,6 +6,9 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 import os
 import time
+import sys
+import types
+import numpy as np
 
 # ----------------------------
 # Prometheus Imports
@@ -14,15 +17,45 @@ from prometheus_client import Counter, Histogram
 from prometheus_fastapi_instrumentator import Instrumentator
 
 # ----------------------------
+# Custom Transformer (needed for pipeline deserialization)
+# ----------------------------
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class AnomalyAdder(BaseEstimator, TransformerMixin):
+    def __init__(self, iso):
+        self.iso = iso
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        labels = self.iso.predict(X)
+        scores = self.iso.decision_function(X)
+        X_copy = X.copy()
+        X_copy["anomaly_label"] = (labels == -1).astype(int)
+        X_copy["anomaly_score"] = scores
+        return X_copy
+
+
+# ----------------------------
 # Initialize FastAPI
 # ----------------------------
 app = FastAPI(title="Fraud Detection API", version="1.0")
+
+instrumentator = Instrumentator().instrument(app)
+instrumentator.expose(app)
 
 # ----------------------------
 # Load Trained Model Pipeline
 # ----------------------------
 try:
-    pipeline = joblib.load("model/Fraud_Detection_Pipeline.pkl")
+    # Ensure unpickling can resolve custom classes when started by uvicorn workers:
+    # Map __main__ and __mp_main__ to this module so GLOBAL('__main__','AnomalyAdder') resolves
+    this_module = sys.modules.get(__name__)
+    sys.modules["__main__"] = this_module
+    sys.modules["__mp_main__"] = this_module
+
+    pipeline = joblib.load("model/fraud_detection_pipe_line.pkl")
     print("✅ Model pipeline loaded successfully.")
 except Exception as e:
     raise RuntimeError(f"❌ Failed to load model: {e}")
@@ -58,15 +91,6 @@ LATENCY = Histogram(
 )
 
 # ----------------------------
-# Prometheus Integration
-# ----------------------------
-@app.on_event("startup")
-async def startup():
-    # Expose /metrics endpoint automatically
-    Instrumentator().instrument(app).expose(app)
-
-
-# ----------------------------
 # Routes
 # ----------------------------
 @app.get("/ping")
@@ -78,7 +102,7 @@ def health_check():
 def predict(transaction: Transaction):
     start_time = time.time()
     try:
-        # Feature engineering
+        # Feature engineering (must match training features!)
         amount = transaction.Amount
         hour = transaction.Hour
         day_night = transaction.Day_Night
@@ -88,12 +112,12 @@ def predict(transaction: Transaction):
         # Convert to DataFrame
         input_data = pd.DataFrame(
             [[amount, hour, day_night, amount_per_hour, amount_vs_time]],
-            columns=['Amount', 'Hour', 'Day_Night', 'Amount_per_Hour', 'Amount_vs_Time']
+            columns=["Amount", "Hour", "Day_Night", "Amount_per_Hour", "Amount_vs_Time"]
         )
 
         # Model Prediction
-        prediction = pipeline.predict(input_data)[0]       # 0 = normal, 1 = fraud
-        fraud_proba = pipeline.predict_proba(input_data)[0][1]  # Probability of fraud (class 1)
+        prediction = int(pipeline.predict(input_data)[0])  # 0 = legit, 1 = fraud
+        fraud_proba = float(pipeline.predict_proba(input_data)[0][1])  # Probability of fraud
 
         label = "fraud" if prediction == 1 else "legit"
 
@@ -105,7 +129,7 @@ def predict(transaction: Transaction):
             "amount": amount,
             "hour": hour,
             "day_night": day_night,
-            "fraud_probability": round(float(fraud_proba), 4),
+            "fraud_probability": round(fraud_proba, 4),
             "predicted_label": label
         }
 

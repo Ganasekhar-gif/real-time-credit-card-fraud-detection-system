@@ -29,7 +29,7 @@ services:
   fraud_api:
     build: .
     container_name: fraud_api
-    command: uvicorn fraud:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn fraud:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:

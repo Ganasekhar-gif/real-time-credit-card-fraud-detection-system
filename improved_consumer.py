@@ -147,3 +147,4 @@ print(f"   Fraud alerts triggered: {fraud_count}")
 print(f"   Fraud rate: {(fraud_count/message_count*100):.2f}%" if message_count > 0 else "   Fraud rate: 0%")
 consumer.close()
 print("🔚 Consumer closed")
+
