@@ -400,8 +400,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Gana Sekhar Kalla**
 - Email: ganasekharkalla@gmail.com
-- LinkedIn: [Your LinkedIn Profile]
-- GitHub: [Your GitHub Profile]
+- LinkedIn: https://www.linkedin.com/in/ganasekhark/
 
 ## 🙏 Acknowledgments
 
